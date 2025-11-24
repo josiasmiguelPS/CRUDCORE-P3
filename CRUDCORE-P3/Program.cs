@@ -1,5 +1,4 @@
 using CRUDCORE_P3.Models;
-using CRUDCORE_P3_Prueva.Models;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
