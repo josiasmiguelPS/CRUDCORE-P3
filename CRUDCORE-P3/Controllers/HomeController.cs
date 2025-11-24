@@ -59,5 +59,20 @@ namespace CRUDCORE_P3.Controllers
             _DBContext.SaveChanges();
             return RedirectToAction("index","Home");
         }
+
+        [HttpGet]
+        public IActionResult Eliminar(int idempleado)
+        {
+            Empleado oEmpleado = _DBContext.Empleados.Include(c => c.oCargo).Where(e => e.IdEmpleado == idempleado).FirstOrDefault();
+            return View(oEmpleado);
+        }
+
+        [HttpPost]
+        public IActionResult Eliminar(Empleado oEmpleado)
+        {
+            _DBContext.Empleados.Remove(oEmpleado);
+            _DBContext.SaveChanges();
+            return View(oEmpleado);
+        }
     }
 }
