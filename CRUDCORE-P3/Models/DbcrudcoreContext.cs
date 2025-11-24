@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 
-namespace CRUDCORE_P3_Prueva.Models;
+namespace CRUDCORE_P3.Models;
 
 public partial class DbcrudcoreContext : DbContext
 {
