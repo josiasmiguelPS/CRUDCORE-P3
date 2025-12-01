@@ -23,7 +23,7 @@ namespace CRUDCORE_P3.Controllers
 
 
         [HttpGet]
-        public IActionResult Empleado_Detalle(int idempleado)
+        public IActionResult Empleado_Detalle(int idEmpleado)
         {
             EmpleadoVM oEmpleadoVM = new EmpleadoVM()
             {
@@ -35,9 +35,9 @@ namespace CRUDCORE_P3.Controllers
                 }).ToList()
             };
 
-            if (idempleado != 0)
+            if (idEmpleado != 0)
             {
-                oEmpleadoVM.oEmpleado = _DBContext.Empleados.Find(idempleado);
+                oEmpleadoVM.oEmpleado = _DBContext.Empleados.Find(idEmpleado);
             }
 
             return View(oEmpleadoVM);
@@ -61,9 +61,9 @@ namespace CRUDCORE_P3.Controllers
         }
 
         [HttpGet]
-        public IActionResult Eliminar(int idempleado)
+        public IActionResult Eliminar(int idEmpleado)
         {
-            Empleado oEmpleado = _DBContext.Empleados.Include(c => c.oCargo).Where(e => e.IdEmpleado == idempleado).FirstOrDefault();
+            Empleado oEmpleado = _DBContext.Empleados.Include(c => c.oCargo).Where(e => e.IdEmpleado == idEmpleado).FirstOrDefault();
             return View(oEmpleado);
         }
 
@@ -72,7 +72,7 @@ namespace CRUDCORE_P3.Controllers
         {
             _DBContext.Empleados.Remove(oEmpleado);
             _DBContext.SaveChanges();
-            return View(oEmpleado);
+            return RedirectToAction("Index", "Home");
         }
     }
 }
