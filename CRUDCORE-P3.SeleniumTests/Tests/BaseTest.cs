@@ -22,7 +22,6 @@ namespace CRUDCORE_P3.SeleniumTests.Tests
         {
             driver = DriverFactory.GetChromeDriver();
             driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(10);
-            driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(30);
         }
 
         [TearDown]
@@ -30,11 +29,8 @@ namespace CRUDCORE_P3.SeleniumTests.Tests
         {
             try
             {
-                if (TestContext.CurrentContext.Result.Outcome.Status == NUnit.Framework.Interfaces.TestStatus.Failed)
-                {
                     string screenshotPath = ScreenshotHelper.TakeScreenshot(driver, TestContext.CurrentContext.Test.Name);
                     if (!string.IsNullOrEmpty(screenshotPath) && test != null)
-                    {
                         test.AddScreenCaptureFromPath(screenshotPath);
                     }
                 }
