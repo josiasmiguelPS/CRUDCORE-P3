@@ -8,13 +8,12 @@ namespace CRUDCORE_P3.SeleniumTests.PageObjects
         private readonly IWebDriver driver;
         private readonly WebDriverWait wait;
 
-        // SELECTORES CORREGIDOS
-        private By nombreInput = By.Name("oEmpleado.NombreCompleto");
-        private By correoInput = By.Name("oEmpleado.Correo");
-        private By telefonoInput = By.Name("oEmpleado.Telefono");
-        private By cargoSelect = By.Name("oEmpleado.IdCargo");
-        private By crearButton = By.CssSelector("button[type='submit']");
-        private By actualizarButton = By.CssSelector("button[type='submit']");
+        private By nombreInput = By.Id("oEmpleado_NombreCompleto");
+        private By correoInput = By.Id("oEmpleado_Correo");
+        private By telefonoInput = By.Id("oEmpleado_Telefono");
+        private By cargoSelect = By.Id("oEmpleado_IdCargo");
+        private By crearButton = By.XPath("//button[contains(text(),'Crear')]");
+        private By actualizarButton = By.XPath("//button[text()='Actualizar']");
         private By volverButton = By.LinkText("Volvers");
 
         public EmpleadoDetallePage(IWebDriver driver)
@@ -25,23 +24,20 @@ namespace CRUDCORE_P3.SeleniumTests.PageObjects
 
         public void EnterNombreCompleto(string nombre)
         {
-            var element = wait.Until(d => d.FindElement(nombreInput));
-            element.Clear();
-            element.SendKeys(nombre);
+            wait.Until(d => d.FindElement(nombreInput)).Clear();
+            driver.FindElement(nombreInput).SendKeys(nombre);
         }
 
         public void EnterCorreo(string correo)
         {
-            var element = driver.FindElement(correoInput);
-            element.Clear();
-            element.SendKeys(correo);
+            driver.FindElement(correoInput).Clear();
+            driver.FindElement(correoInput).SendKeys(correo);
         }
 
         public void EnterTelefono(string telefono)
         {
-            var element = driver.FindElement(telefonoInput);
-            element.Clear();
-            element.SendKeys(telefono);
+            driver.FindElement(telefonoInput).Clear();
+            driver.FindElement(telefonoInput).SendKeys(telefono);
         }
 
         public void SelectCargo(string cargoText)
@@ -52,7 +48,14 @@ namespace CRUDCORE_P3.SeleniumTests.PageObjects
 
         public void ClickCrear()
         {
-            driver.FindElement(crearButton).Click();
+            var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
+            var botonCrear = wait.Until(d => d.FindElement(By.CssSelector("button[type='submit']")));
+
+            // Scroll al botón si es necesario
+            ((IJavaScriptExecutor)driver).ExecuteScript("arguments[0].scrollIntoView(true);", botonCrear);
+            System.Threading.Thread.Sleep(500);
+
+            botonCrear.Click();
         }
 
         public void ClickActualizar()
@@ -66,7 +69,6 @@ namespace CRUDCORE_P3.SeleniumTests.PageObjects
             EnterCorreo(correo);
             EnterTelefono(telefono);
             SelectCargo(cargo);
-            System.Threading.Thread.Sleep(500); // Pequeña pausa
             ClickCrear();
         }
 
@@ -76,7 +78,6 @@ namespace CRUDCORE_P3.SeleniumTests.PageObjects
             EnterCorreo(correo);
             EnterTelefono(telefono);
             SelectCargo(cargo);
-            System.Threading.Thread.Sleep(500);
             ClickActualizar();
         }
     }

@@ -1,5 +1,6 @@
 ﻿using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace CRUDCORE_P3.SeleniumTests.PageObjects
 {
@@ -44,13 +45,15 @@ namespace CRUDCORE_P3.SeleniumTests.PageObjects
 
         public void ClickEditarByName(string nombreCompleto)
         {
-            var row = driver.FindElement(By.XPath($"//td[text()='{nombreCompleto}']/parent::tr"));
+            var row = driver.FindElement(By.CssSelector($"td:contains('{nombreCompleto}')"));
+
             row.FindElement(By.LinkText("Editar")).Click();
         }
 
         public void ClickEliminarByName(string nombreCompleto)
         {
-            var row = driver.FindElement(By.XPath($"//td[text()='{nombreCompleto}']/parent::tr"));
+            var row = driver.FindElement(By.CssSelector($"td:contains('{nombreCompleto}')"));
+
             row.FindElement(By.LinkText("Eliminar")).Click();
         }
 
@@ -58,7 +61,12 @@ namespace CRUDCORE_P3.SeleniumTests.PageObjects
         {
             try
             {
-                driver.FindElement(By.XPath($"//td[text()='{nombreCompleto}']"));
+                // Escapa apóstrofes para XPath
+                string escapedNombre = nombreCompleto.Contains("'")
+                    ? $"concat('{nombreCompleto.Replace("'", "',\"'\",'")}')"
+                    : $"'{nombreCompleto}'";
+
+                driver.FindElement(By.XPath($"//td[text()={escapedNombre}]"));
                 return true;
             }
             catch (NoSuchElementException)
@@ -66,5 +74,6 @@ namespace CRUDCORE_P3.SeleniumTests.PageObjects
                 return false;
             }
         }
+
     }
 }

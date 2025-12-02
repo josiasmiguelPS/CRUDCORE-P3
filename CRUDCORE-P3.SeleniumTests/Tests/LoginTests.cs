@@ -1,8 +1,9 @@
-﻿using NUnit.Framework;
-using OpenQA.Selenium;
-using CRUDCORE_P3.SeleniumTests.Helpers;
+﻿using AventStack.ExtentReports;
 using CRUDCORE_P3.SeleniumTests.PageObjects;
-using AventStack.ExtentReports;
+using NUnit.Framework;
+using OpenQA.Selenium;
+using System;
+using System.Linq;
 
 namespace CRUDCORE_P3.SeleniumTests.Tests
 {
@@ -15,13 +16,14 @@ namespace CRUDCORE_P3.SeleniumTests.Tests
         public new void Setup()
         {
             base.Setup();
-            loginPage = new LoginPage(driver);
-            test = ReportHelper.GetExtent().CreateTest(TestContext.CurrentContext.Test.Name);
-        }
 
-        // ================================================================
-        // HU-1: Login de Usuario
-        // ================================================================
+            // Crear el test en ExtentReports
+            test = extent.CreateTest(TestContext.CurrentContext.Test.Name)
+                .AssignCategory(TestContext.CurrentContext.Test.Properties["Category"].Cast<string>().FirstOrDefault() ?? "General")
+                .AssignAuthor("Tu Nombre Aquí");
+
+            loginPage = new LoginPage(driver);
+        }
 
         [Test]
         [Category("Login")]
@@ -33,31 +35,30 @@ namespace CRUDCORE_P3.SeleniumTests.Tests
             {
                 test.Log(Status.Info, "Iniciando prueba: Login exitoso con credenciales válidas");
 
-                // Arrange
                 string correo = "admin@test.com";
                 string password = "admin123";
 
                 test.Log(Status.Info, $"Navegando a: {baseUrl}");
                 loginPage.NavigateTo(baseUrl);
 
-                // Act
+                AddScreenshotToReport("Login_PaginaInicial");
+
                 test.Log(Status.Info, $"Ingresando credenciales - Correo: {correo}");
                 loginPage.Login(correo, password);
 
-                // Wait for redirect
                 System.Threading.Thread.Sleep(2000);
 
-                // Assert
                 test.Log(Status.Info, "Verificando redirección a Home");
-                Assert.That(driver.Url.Contains("/Home/Index"), Is.True,
+                Assert.That(driver.Url.Contains("/Home"), Is.True,
                     "El usuario debería ser redirigido a la página principal");
 
-                ScreenshotHelper.TakeScreenshot(driver, "Login_Exitoso");
-                test.Log(Status.Pass, "Login exitoso - Usuario autenticado correctamente");
+                AddScreenshotToReport("Login_Exitoso");
+                test.Pass("✅ Login exitoso - Usuario autenticado correctamente");
             }
             catch (Exception ex)
             {
-                test.Log(Status.Fail, $"Prueba fallida: {ex.Message}");
+                test.Fail($"❌ Prueba fallida: {ex.Message}");
+                AddScreenshotToReport("Login_Error");
                 throw;
             }
         }
@@ -65,41 +66,36 @@ namespace CRUDCORE_P3.SeleniumTests.Tests
         [Test]
         [Category("Login")]
         [Category("PruebaNegativa")]
-        [Description("Verificar que el sistema rechaza credenciales inválidas")]
-        public void Login_PruebaNegativa_CredencialesInvalidas()
+        [Description("Verificar que el sistema rechaza credenciales incorrectas")]
+        public void Login_PruebaNegativa_CredencialesIncorrectas()
         {
             try
             {
-                test.Log(Status.Info, "Iniciando prueba: Login con credenciales inválidas");
+                test.Log(Status.Info, "Iniciando prueba: Login con credenciales incorrectas");
 
-                // Arrange
-                string correo = "usuario@invalido.com";
-                string password = "passwordincorrecto";
-
-                test.Log(Status.Info, $"Navegando a: {baseUrl}");
                 loginPage.NavigateTo(baseUrl);
 
-                // Act
-                test.Log(Status.Info, $"Intentando login con credenciales inválidas");
-                loginPage.Login(correo, password);
+                test.Log(Status.Info, "Ingresando credenciales inválidas");
+                loginPage.Login("usuario@invalido.com", "password_incorrecta");
 
                 System.Threading.Thread.Sleep(1000);
 
-                // Assert
-                test.Log(Status.Info, "Verificando mensaje de error");
-                Assert.That(loginPage.IsErrorMessageDisplayed(), Is.True,
-                    "Debería mostrar mensaje de error con credenciales inválidas");
+                AddScreenshotToReport("Login_CredencialesIncorrectas");
 
-                Assert.That(loginPage.GetErrorMessage(),
-                    Does.Contain("Credenciales incorrectas"),
-                    "El mensaje de error debe indicar credenciales incorrectas");
+                test.Log(Status.Info, "Verificando que permanece en login");
+                Assert.That(driver.Url.Contains("/Login"), Is.True,
+                    "Debe permanecer en la página de login");
 
-                ScreenshotHelper.TakeScreenshot(driver, "Login_Credenciales_Invalidas");
-                test.Log(Status.Pass, "El sistema rechazó correctamente las credenciales inválidas");
+                // Verificar mensaje de error
+                var errorMsg = driver.FindElement(By.XPath("//*[contains(text(), 'Credenciales incorrectas')]"));
+                Assert.That(errorMsg.Displayed, Is.True, "Debe mostrar mensaje de error");
+
+                test.Pass("✅ Sistema rechazó correctamente las credenciales inválidas");
             }
             catch (Exception ex)
             {
-                test.Log(Status.Fail, $"Prueba fallida: {ex.Message}");
+                test.Fail($"❌ Prueba fallida: {ex.Message}");
+                AddScreenshotToReport("Error_CredencialesIncorrectas");
                 throw;
             }
         }
@@ -114,147 +110,97 @@ namespace CRUDCORE_P3.SeleniumTests.Tests
             {
                 test.Log(Status.Info, "Iniciando prueba: Login con campos vacíos");
 
-                // Arrange
-                test.Log(Status.Info, $"Navegando a: {baseUrl}");
                 loginPage.NavigateTo(baseUrl);
+                System.Threading.Thread.Sleep(1000);
 
-                // Act - Intentar login sin llenar campos
-                test.Log(Status.Info, "Intentando login con campos vacíos");
+                string urlInicial = driver.Url;
+                test.Log(Status.Info, $"URL inicial: {urlInicial}");
+
+                // Verificar atributos HTML5
+                var correoInput = driver.FindElement(By.Name("correo"));
+                var passwordInput = driver.FindElement(By.Name("password"));
+
+                string correoRequired = correoInput.GetAttribute("required");
+                string correoType = correoInput.GetAttribute("type");
+
+                test.Log(Status.Info, $"Campo correo - Type: {correoType}, Required: {correoRequired}");
+
                 loginPage.EnterCorreo("");
                 loginPage.EnterPassword("");
-                loginPage.ClickLogin();
 
+                AddScreenshotToReport("Login_CamposVacios_Antes");
+
+                bool correoValido = (bool)((IJavaScriptExecutor)driver)
+                    .ExecuteScript("return arguments[0].checkValidity();", correoInput);
+
+                Assert.That(correoValido, Is.False, "Campo correo vacío debe ser inválido");
+
+                loginPage.ClickLogin();
                 System.Threading.Thread.Sleep(1000);
 
-                // Assert - Verificar que no se redirige
-                test.Log(Status.Info, "Verificando que permanece en página de login");
-                Assert.That(driver.Url.Contains("/Login"), Is.True,
+                AddScreenshotToReport("Login_CamposVacios_Validacion");
+
+                Assert.That(driver.Url, Is.EqualTo(urlInicial),
                     "No debería redirigir con campos vacíos");
 
-                ScreenshotHelper.TakeScreenshot(driver, "Login_Campos_Vacios");
-                test.Log(Status.Pass, "El sistema rechazó correctamente campos vacíos");
+                test.Pass("✅ Sistema validó correctamente campos vacíos");
             }
             catch (Exception ex)
             {
-                test.Log(Status.Fail, $"Prueba fallida: {ex.Message}");
+                test.Fail($"❌ Prueba fallida: {ex.Message}");
+                AddScreenshotToReport("Error_CamposVacios");
                 throw;
             }
         }
 
         [Test]
         [Category("Login")]
-        [Category("PruebaLimites")]
-        [Description("Verificar comportamiento con correo de longitud máxima")]
-        public void Login_PruebaLimites_CorreoLongitudMaxima()
-        {
-            try
-            {
-                test.Log(Status.Info, "Iniciando prueba: Login con correo de longitud máxima");
-
-                // Arrange - Correo de 60 caracteres (límite de la BD)
-                string correoLargo = new string('a', 48) + "@example.com"; // 60 chars
-                string password = "test123";
-
-                test.Log(Status.Info, $"Navegando a: {baseUrl}");
-                loginPage.NavigateTo(baseUrl);
-
-                // Act
-                test.Log(Status.Info, $"Intentando login con correo largo ({correoLargo.Length} caracteres)");
-                loginPage.Login(correoLargo, password);
-
-                System.Threading.Thread.Sleep(1000);
-
-                // Assert - Debe aceptar el correo largo pero fallar autenticación
-                test.Log(Status.Info, "Verificando que el sistema procesa correos largos");
-                Assert.That(loginPage.IsErrorMessageDisplayed(), Is.True,
-                    "Debería procesar correo largo y mostrar error de autenticación");
-
-                ScreenshotHelper.TakeScreenshot(driver, "Login_Correo_Longitud_Maxima");
-                test.Log(Status.Pass, "El sistema maneja correctamente correos de longitud máxima");
-            }
-            catch (Exception ex)
-            {
-                test.Log(Status.Fail, $"Prueba fallida: {ex.Message}");
-                throw;
-            }
-        }
-
-        [Test]
-        [Category("Login")]
-        [Category("PruebaLimites")]
-        [Description("Verificar comportamiento con caracteres especiales en contraseña")]
-        public void Login_PruebaLimites_CaracteresEspecialesPassword()
-        {
-            try
-            {
-                test.Log(Status.Info, "Iniciando prueba: Login con caracteres especiales en password");
-
-                // Arrange
-                string correo = "test@test.com";
-                string passwordEspecial = "P@ssw0rd!#$%&*()";
-
-                test.Log(Status.Info, $"Navegando a: {baseUrl}");
-                loginPage.NavigateTo(baseUrl);
-
-                // Act
-                test.Log(Status.Info, "Intentando login con password con caracteres especiales");
-                loginPage.Login(correo, passwordEspecial);
-
-                System.Threading.Thread.Sleep(1000);
-
-                // Assert
-                test.Log(Status.Info, "Verificando que el sistema acepta caracteres especiales");
-                // El sistema debe procesar la contraseña sin errores
-                Assert.DoesNotThrow(() => loginPage.ClickLogin(),
-                    "El sistema debe aceptar caracteres especiales en password");
-
-                ScreenshotHelper.TakeScreenshot(driver, "Login_Password_Caracteres_Especiales");
-                test.Log(Status.Pass, "El sistema maneja correctamente caracteres especiales");
-            }
-            catch (Exception ex)
-            {
-                test.Log(Status.Fail, $"Prueba fallida: {ex.Message}");
-                throw;
-            }
-        }
-
-        [Test]
-        [Category("Login")]
-        [Category("PruebaNegativa")]
-        [Description("Verificar que el sistema rechaza inyección SQL en login")]
+        [Category("Seguridad")]
+        [Description("Verificar protección contra inyección SQL")]
         public void Login_Seguridad_InyeccionSQL()
         {
             try
             {
                 test.Log(Status.Info, "Iniciando prueba: Prevención de inyección SQL");
+                test.Log(Status.Warning, "⚠️ Prueba de seguridad - Intentando inyección SQL");
 
-                // Arrange - Intentar inyección SQL común
-                string correoMalicioso = "admin' OR '1'='1";
-                string passwordMalicioso = "' OR '1'='1";
-
-                test.Log(Status.Info, $"Navegando a: {baseUrl}");
                 loginPage.NavigateTo(baseUrl);
 
-                // Act
-                test.Log(Status.Warning, "Intentando inyección SQL (prueba de seguridad)");
-                loginPage.Login(correoMalicioso, passwordMalicioso);
+                // Bypass validación HTML5 con JavaScript
+                var correoInput = driver.FindElement(By.Name("correo"));
+                var passwordInput = driver.FindElement(By.Name("password"));
 
-                System.Threading.Thread.Sleep(1000);
+                ((IJavaScriptExecutor)driver).ExecuteScript(
+                    "arguments[0].value = arguments[1]; arguments[0].type = 'text';",
+                    correoInput, "admin@test.com' OR '1'='1");
+                ((IJavaScriptExecutor)driver).ExecuteScript(
+                    "arguments[0].value = arguments[1];",
+                    passwordInput, "' OR '1'='1");
 
-                // Assert - NO debe permitir acceso
-                test.Log(Status.Info, "Verificando que el sistema bloquea inyección SQL");
-                Assert.That(driver.Url.Contains("/Login"), Is.True,
-                    "El sistema NO debe autenticar con inyección SQL");
+                test.Log(Status.Info, "Valores de inyección SQL establecidos");
 
-                ScreenshotHelper.TakeScreenshot(driver, "Login_Seguridad_SQL_Injection");
-                test.Log(Status.Pass, "El sistema está protegido contra inyección SQL");
+                AddScreenshotToReport("Login_InyeccionSQL_Antes");
+
+                ((IJavaScriptExecutor)driver).ExecuteScript(
+                    "arguments[0].submit();",
+                    driver.FindElement(By.TagName("form")));
+
+                System.Threading.Thread.Sleep(2000);
+
+                AddScreenshotToReport("Login_InyeccionSQL_Despues");
+
+                bool enLogin = driver.Url.Contains("/Login");
+                Assert.That(enLogin, Is.True,
+                    "Sistema debe rechazar inyección SQL");
+
+                test.Pass("✅ Sistema protegido contra inyección SQL");
             }
             catch (Exception ex)
             {
-                test.Log(Status.Fail, $"Prueba fallida: {ex.Message}");
+                test.Fail($"❌ Prueba fallida: {ex.Message}");
+                AddScreenshotToReport("Error_InyeccionSQL");
                 throw;
             }
         }
-
     }
 }

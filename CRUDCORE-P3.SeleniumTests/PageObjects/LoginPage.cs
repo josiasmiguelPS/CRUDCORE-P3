@@ -10,7 +10,7 @@ namespace CRUDCORE_P3.SeleniumTests.PageObjects
 
         private By correoInput = By.Name("correo");
         private By passwordInput = By.Name("password");
-        private By loginButton = By.CssSelector("button[type='submit']"); // CAMBIO AQUÍ
+        private By loginButton = By.CssSelector("button.btn.btn-primary");
         private By errorMessage = By.CssSelector("p.text-danger");
 
         public LoginPage(IWebDriver driver)
@@ -62,14 +62,7 @@ namespace CRUDCORE_P3.SeleniumTests.PageObjects
 
         public string GetErrorMessage()
         {
-            try
-            {
-                return driver.FindElement(errorMessage).Text;
-            }
-            catch
-            {
-                return string.Empty;
-            }
+            return driver.FindElement(errorMessage).Text;
         }
     }
 }

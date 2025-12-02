@@ -5,7 +5,7 @@ namespace CRUDCORE_P3.SeleniumTests.Helpers
     public class ScreenshotHelper
     {
         private static readonly string screenshotPath = Path.Combine(
-            Directory.GetCurrentDirectory(),
+            Directory.GetCurrentDirectory(), 
             "Screenshots"
         );
 
@@ -25,10 +25,10 @@ namespace CRUDCORE_P3.SeleniumTests.Helpers
                 string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
                 string fileName = $"{testName}_{timestamp}.png";
                 string fullPath = Path.Combine(screenshotPath, fileName);
-
+                
                 screenshot.SaveAsFile(fullPath);
                 Console.WriteLine($"Screenshot guardado: {fullPath}");
-
+                
                 return fullPath;
             }
             catch (Exception ex)

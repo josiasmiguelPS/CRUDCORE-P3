@@ -1,5 +1,9 @@
 ﻿using AventStack.ExtentReports;
 using AventStack.ExtentReports.Reporter;
+using AventStack.ExtentReports.Reporter.Config;
+using AventStack.ExtentReports.Reporter.Configuration;
+using System;
+using System.IO;
 
 namespace CRUDCORE_P3.SeleniumTests.Helpers
 {
@@ -22,16 +26,26 @@ namespace CRUDCORE_P3.SeleniumTests.Helpers
                     Directory.CreateDirectory(reportDir);
                 }
 
-                var htmlReporter = new ExtentSparkReporter(reportPath);
-                htmlReporter.Config.DocumentTitle = "Reporte de Pruebas - CRUDCORE-P3";
-                htmlReporter.Config.ReportName = "Pruebas Automatizadas con Selenium";
-                htmlReporter.Config.Theme = AventStack.ExtentReports.Reporter.Config.Theme.Dark;
+                // ExtentSparkReporter es la versión 5.x
+                var sparkReporter = new ExtentSparkReporter(reportPath);
+
+                // Configuración del reporte
+                sparkReporter.Config.DocumentTitle = "Reporte de Pruebas - CRUDCORE-P3";
+                sparkReporter.Config.ReportName = "Pruebas Automatizadas con Selenium";
+                sparkReporter.Config.Theme = Theme.Dark;
+                sparkReporter.Config.Encoding = "UTF-8";
+                sparkReporter.Config.TimeStampFormat = "MMM dd, yyyy HH:mm:ss";
 
                 extent = new ExtentReports();
-                extent.AttachReporter(htmlReporter);
+                extent.AttachReporter(sparkReporter);
+
+                // Información del sistema
                 extent.AddSystemInfo("Aplicación", "CRUDCORE-P3");
                 extent.AddSystemInfo("Ambiente", "Testing");
                 extent.AddSystemInfo("Usuario", Environment.UserName);
+                extent.AddSystemInfo("Sistema Operativo", Environment.OSVersion.ToString());
+                extent.AddSystemInfo(".NET Version", Environment.Version.ToString());
+                extent.AddSystemInfo("Navegador", "Chrome");
             }
             return extent;
         }
@@ -39,7 +53,7 @@ namespace CRUDCORE_P3.SeleniumTests.Helpers
         public static void FlushReport()
         {
             extent?.Flush();
-            Console.WriteLine($"Reporte HTML generado: {reportPath}");
+            Console.WriteLine($"✅ Reporte HTML generado exitosamente en: {reportPath}");
         }
     }
 }
